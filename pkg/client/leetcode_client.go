@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -17,11 +17,10 @@ type LeetcodeClient struct {
 	Cookie    string
 	SleepTime time.Duration
 	Endpoint  string
-	Logger    *log.Logger
 	Headers   map[string]string
 }
 
-func NewLeetcodeClient(cookie string, logger *log.Logger) *LeetcodeClient {
+func NewLeetcodeClient(cookie string) *LeetcodeClient {
 	client := &http.Client{}
 	headers := map[string]string{
 		"Connection":   "keep-alive",
@@ -34,7 +33,6 @@ func NewLeetcodeClient(cookie string, logger *log.Logger) *LeetcodeClient {
 		Cookie:    cookie,
 		SleepTime: 5 * time.Second,
 		Endpoint:  "https://leetcode.cn/",
-		Logger:    logger,
 		Headers:   headers,
 	}
 }
@@ -70,16 +68,16 @@ func (lc *LeetcodeClient) Login() error {
 			return fmt.Errorf("failed to execute request: %w", err)
 		}
 		if resp.StatusCode == http.StatusOK && resp.Request.URL.String() == lc.Endpoint {
-			lc.Logger.Println("Login successfully!")
+			log.Println("Login successfully!")
 			return nil
 		}
-		lc.Logger.Println("Login failed, Wait till next round!")
+		log.Println("Login failed, Wait till next round!")
 		if tryCnt != ATTEMPT-1 {
 			time.Sleep(lc.SleepTime)
 		}
 	}
 
-	lc.Logger.Println("LoginError: Login failed, ensure your login credential is correct!")
+	log.Println("LoginError: Login failed, ensure your login credential is correct!")
 	return errors.New("LoginError: Login failed, ensure your login credential is correct!")
 }
 
@@ -113,7 +111,7 @@ func (lc *LeetcodeClient) DownloadCode(submission map[string]interface{}) (map[s
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
@@ -132,7 +130,7 @@ func (lc *LeetcodeClient) DownloadCode(submission map[string]interface{}) (map[s
 }
 
 func (lc *LeetcodeClient) GetSubmissionList(pageNum int) (map[string]interface{}, error) {
-	lc.Logger.Printf("Now scraping submissions list for page: %d\n", pageNum)
+	log.Printf("Now scraping submissions list for page: %d\n", pageNum)
 	submissionsURL := fmt.Sprintf("https://leetcode.cn/api/submissions/?offset=%d&limit=40", pageNum)
 	req, err := http.NewRequest("GET", submissionsURL, nil)
 	if err != nil {
@@ -147,7 +145,7 @@ func (lc *LeetcodeClient) GetSubmissionList(pageNum int) (map[string]interface{}
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}

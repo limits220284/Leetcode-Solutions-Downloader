@@ -30,7 +30,7 @@ var FILE_FORMAT = map[string]string{
 }
 
 // generatePathWithDir generates a path with a directory for the given problem details.
-func generatePathWithDir(problemID, problemTitle, submissionLanguage, outputDir string) (string, error) {
+func GeneratePathWithDir(problemID, problemTitle, submissionLanguage, outputDir string) (string, error) {
 	var pathname, filename string
 	if isDigit(problemID[0]) {
 		problemIDInt, err := strconv.Atoi(problemID)
@@ -54,7 +54,7 @@ func generatePathWithDir(problemID, problemTitle, submissionLanguage, outputDir 
 }
 
 // generatePath generates a path for the given problem details.
-func generatePath(problemID, problemTitle, submissionLanguage, outputDir string) (string, error) {
+func GeneratePath(problemID, problemTitle, submissionLanguage, outputDir string) (string, error) {
 	var pathname, filename string
 	if isDigit(problemID[0]) {
 		problemIDInt, err := strconv.Atoi(problemID)
@@ -78,7 +78,7 @@ func generatePath(problemID, problemTitle, submissionLanguage, outputDir string)
 }
 
 // gitPush performs a git commit and push with the current date as the commit message.
-func gitPush(pushDir string) {
+func GitPush(pushDir string) error {
 	today := time.Now().Format("2006-01-02")
 	os.Chdir(pushDir)
 	instructions := []string{
@@ -92,32 +92,14 @@ func gitPush(pushDir string) {
 		cmd := exec.Command("sh", "-c", instruction)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			log.Printf("Git operation failed: %s\nOutput: %s", err, output)
-			return
+			return err
 		}
 		log.Printf("~~~~~~~~~~~~~ %s finished! ~~~~~~~~", instruction)
 	}
+	return nil
 }
 
 // isDigit checks if a byte represents a digit (0-9).
 func isDigit(b byte) bool {
 	return b >= '0' && b <= '9'
-}
-
-func main() {
-	// Example usage of generatePathWithDir
-	path, err := generatePathWithDir("123", "example-problem", "Go", "./output")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Generated path with dir:", path)
-
-	// Example usage of generatePath
-	path, err = generatePath("123", "example-problem", "Go", "./output")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Generated path:", path)
-
-	// Example usage of gitPush
-	gitPush("/path/to/your/repo")
 }

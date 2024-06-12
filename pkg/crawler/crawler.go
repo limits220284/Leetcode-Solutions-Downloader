@@ -3,8 +3,9 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"lsc/pkg/client"
+	"lsc/pkg/utils"
 	"os"
 	"strings"
 	"time"
@@ -41,11 +42,11 @@ type Crawler struct {
 	C                       int
 	Visited                 map[string]string
 	ProblemsToBeReprocessed []string
-	Lc                      *LeetcodeClient
+	Lc                      *client.LeetcodeClient
 }
 
 func NewCrawler(args Args) *Crawler {
-	configFile, err := ioutil.ReadFile(CONFIG_PATH)
+	configFile, err := os.ReadFile(CONFIG_PATH)
 	if err != nil {
 		log.Fatal("Failed to read config file:", err)
 	}
@@ -76,7 +77,7 @@ func NewCrawler(args Args) *Crawler {
 		}
 	}
 
-	lc := NewLeetcodeClient(cookie)
+	lc := client.NewLeetcodeClient(cookie)
 
 	return &Crawler{
 		Cookie:                  cookie,
@@ -132,7 +133,12 @@ func (c *Crawler) ProcessSubmission(submission Submission) error {
 
 	if _, visited := c.Visited[submissionToken]; !visited {
 		c.Visited[submissionToken] = problemFrontendID
-		fullPath := GeneratePath(problemFrontendID, problemTitle, submissionLang, c.OutputDir)
+		fullPath, err := utils.GeneratePath(problemFrontendID, problemTitle, submissionLang, c.OutputDir)
+		if err != nil {
+			log.Println(err) //TODO
+			return err
+		}
+
 		log.Println(fullPath)
 		if !c.Overwrite && fileExists(fullPath) {
 			return nil
@@ -145,7 +151,7 @@ func (c *Crawler) ProcessSubmission(submission Submission) error {
 }
 
 func (c *Crawler) SaveCode(code, problemFrontendID, problemTitle, submissionLang, fullPath string) error {
-	if err := ioutil.WriteFile(fullPath, []byte(code), 0644); err != nil {
+	if err := os.WriteFile(fullPath, []byte(code), 0644); err != nil {
 		return fmt.Errorf("failed to write code to file: %w", err)
 	}
 	log.Println("Writing ends! " + fullPath)
@@ -164,7 +170,7 @@ func (c *Crawler) IsTemporaryProblem(problemFrontendID string) bool {
 
 func (c *Crawler) ProcessTemporaryProblems() {
 	if fileExists(TEMP_FILE_PATH) {
-		tempFile, err := ioutil.ReadFile(TEMP_FILE_PATH)
+		tempFile, err := os.ReadFile(TEMP_FILE_PATH)
 		if err != nil {
 			log.Fatal("Failed to read temporary file:", err)
 		}
@@ -238,7 +244,7 @@ func (c *Crawler) Execute() {
 	log.Println("Start scraping")
 	c.Scraping()
 	log.Println("End scraping")
-	if err := GitPush(c.PushDir); err != nil {
+	if err := utils.GitPush(c.PushDir); err != nil {
 		log.Fatal("Git push failed:", err)
 	}
 }
