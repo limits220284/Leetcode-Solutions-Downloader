@@ -136,9 +136,8 @@ func (c *Crawler) ProcessSubmission(submission client.Submission) error {
 	if err != nil {
 		return err
 	}
-
-	problemFrontendID := submissionDetails.QuestionID
-	problemTitle := submissionDetails.QuestionTitle
+	problemFrontendID := submissionDetails.Data.SubmissionDetail.Question.QuestionFrontendID
+	problemTitle := submissionDetails.Data.SubmissionDetail.Question.TranslatedTitle
 	submissionLang := submission.Lang
 	submissionToken := problemTitle + submissionLang
 
@@ -154,7 +153,7 @@ func (c *Crawler) ProcessSubmission(submission client.Submission) error {
 		if !c.Overwrite && fileExists(fullPath) {
 			return nil
 		}
-		if err := c.SaveCode(submissionDetails.Code, problemFrontendID, problemTitle, submissionLang, fullPath); err != nil {
+		if err := c.SaveCode(submissionDetails.Data.SubmissionDetail.Code, problemFrontendID, problemTitle, submissionLang, fullPath); err != nil {
 			return err
 		}
 	}
