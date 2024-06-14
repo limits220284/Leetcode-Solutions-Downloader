@@ -145,7 +145,7 @@ func (c *Crawler) ProcessSubmission(submission client.Submission) error {
 		c.Visited[submissionToken] = problemFrontendID
 		fullPath, err := utils.GeneratePath(problemFrontendID, problemTitle, submissionLang, c.OutputDir)
 		if err != nil {
-			log.Println(err) //TODO
+			log.Println("generate path error", err)
 			return err
 		}
 

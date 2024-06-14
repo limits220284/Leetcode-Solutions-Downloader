@@ -29,19 +29,4 @@ func main() {
 	// Execute the crawler once
 	crawler := crawler.NewCrawler(args)
 	crawler.Execute()
-
-	// Uncomment to run the crawler every 24 hours
-	// c := cron.New()
-	// _, err := c.AddFunc("@every 24h", func() {
-	// 	crawler := NewCrawler(args)
-	// 	crawler.Execute()
-	// })
-	// if err != nil {
-	// 	log.Fatalf("Error scheduling the job: %v", err)
-	// }
-	// c.Start()
-	// defer c.Stop()
-
-	// Wait indefinitely
-	// select {}
 }
