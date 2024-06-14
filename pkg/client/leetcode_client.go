@@ -181,6 +181,6 @@ func (lc *LeetcodeClient) GetSubmissionList(pageNum int) (SubmissionsDump, error
 	if err := json.Unmarshal(body, &submissionsList); err != nil {
 		return SubmissionsDump{}, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
-
+	log.Println(submissionsList)
 	return submissionsList, nil
 }
