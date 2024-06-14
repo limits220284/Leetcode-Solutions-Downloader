@@ -13,7 +13,7 @@ import (
 
 const (
 	TEMP_FILE_PATH = "./temp_problemset.txt"
-	CONFIG_PATH    = "./configuration/config.json"
+	CONFIG_PATH    = "./config/config.json"
 	LIMIT          = 40
 	PAGE_TIME      = 3
 	START_PAGE     = 0
@@ -34,15 +34,15 @@ type Args struct {
 }
 
 type Crawler struct {
-	Cookie                  string
-	OutputDir               string
-	TimeControl             int64
-	Overwrite               bool
-	PushDir                 string
-	C                       int
-	Visited                 map[string]string
-	ProblemsToBeReprocessed []string
-	Lc                      *client.LeetcodeClient
+	Cookie                  string                 // cookie
+	OutputDir               string                 // output directory
+	TimeControl             int64                  // time control in seconds
+	Overwrite               bool                   // whether to overwrite existing config
+	PushDir                 string                 // directory to push to git
+	C                       int                    // current page number
+	Visited                 map[string]string      // map of visited problems
+	ProblemsToBeReprocessed []string               // list of problems to be reprocessed
+	Lc                      *client.LeetcodeClient // leetcode client
 }
 
 func NewCrawler(args Args) *Crawler {
@@ -92,12 +92,12 @@ func NewCrawler(args Args) *Crawler {
 	}
 }
 
-func (c *Crawler) IsExpired(submission Submission) bool {
+func (c *Crawler) IsExpired(submission client.Submission) bool {
 	curTime := time.Now().Unix()
 	return curTime-submission.Timestamp > c.TimeControl
 }
 
-func (c *Crawler) ProcessSubmissions(submissions []Submission) bool {
+func (c *Crawler) ProcessSubmissions(submissions []client.Submission) bool {
 	failCount := 0
 	for _, submission := range submissions {
 		if submission.StatusDisplay != "Accepted" {
@@ -120,14 +120,25 @@ func (c *Crawler) ProcessSubmissions(submissions []Submission) bool {
 	return false
 }
 
-func (c *Crawler) ProcessSubmission(submission Submission) error {
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+		log.Fatal(err)
+	}
+	return true
+}
+
+func (c *Crawler) ProcessSubmission(submission client.Submission) error {
 	submissionDetails, err := c.Lc.DownloadCode(submission)
 	if err != nil {
 		return err
 	}
 
-	problemFrontendID := submissionDetails.Question.QuestionFrontendID
-	problemTitle := submissionDetails.Question.TranslatedTitle
+	problemFrontendID := submissionDetails.QuestionID
+	problemTitle := submissionDetails.QuestionTitle
 	submissionLang := submission.Lang
 	submissionToken := problemTitle + submissionLang
 
@@ -224,7 +235,7 @@ func (c *Crawler) Scraping() {
 			log.Println("Failed to get submission list:", err)
 			break
 		}
-		expired := c.ProcessSubmissions(submissionList.SubmissionsDump)
+		expired := c.ProcessSubmissions(submissionList.Submissions)
 		if !submissionList.HasNext || expired {
 			log.Println("No more submissions!")
 			break

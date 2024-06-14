@@ -12,6 +12,32 @@ import (
 	"time"
 )
 
+// 定义与 JSON 数据结构对应的 Go 结构体
+type Submission struct {
+	ID            int    `json:"id"`
+	Lang          string `json:"lang"`
+	Time          string `json:"time"`
+	StatusDisplay string `json:"status_display"`
+	Runtime       string `json:"runtime"`
+	URL           string `json:"url"`
+	IsPending     string `json:"is_pending"`
+	Title         string `json:"title"`
+	Timestamp     int64  `json:"timestamp"`
+	Memory        string `json:"memory"`
+}
+
+type SubmissionsDump struct {
+	Submissions []Submission `json:"submissions_dump"`
+	HasNext     bool         `json:"has_next"`
+	LastKey     string       `json:"last_key"`
+}
+
+type SubmissionDetailResponse struct {
+	Code          string `json:"data.submissionDetail.code"`
+	QuestionID    string `json:"data.submissionDetail.question.questionFrontendId"`
+	QuestionTitle string `json:"data.submissionDetail.question.translatedTitle"`
+}
+
 type LeetcodeClient struct {
 	Client    *http.Client
 	Cookie    string
@@ -81,78 +107,79 @@ func (lc *LeetcodeClient) Login() error {
 	return errors.New("LoginError: Login failed, ensure your login credential is correct!")
 }
 
-func (lc *LeetcodeClient) DownloadCode(submission map[string]interface{}) (map[string]interface{}, error) {
+func (lc *LeetcodeClient) DownloadCode(submission Submission) (SubmissionDetailResponse, error) {
 	queryFile, err := os.ReadFile("query/query_download_submission")
 	if err != nil {
-		return nil, fmt.Errorf("failed to read query file: %w", err)
+		return SubmissionDetailResponse{}, fmt.Errorf("failed to read query file: %w", err)
 	}
 
 	queryString := string(queryFile)
 	data := map[string]interface{}{
 		"query":         queryString,
 		"operationName": "mySubmissionDetail",
-		"variables":     map[string]interface{}{"id": submission["id"]},
+		"variables":     map[string]interface{}{"id": submission.ID},
 	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal JSON: %w", err)
+		return SubmissionDetailResponse{}, fmt.Errorf("failed to marshal JSON: %w", err)
 	}
 
 	req, err := http.NewRequest("POST", lc.Endpoint+"graphql/", bytes.NewBuffer(jsonData))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return SubmissionDetailResponse{}, fmt.Errorf("failed to create request: %w", err)
 	}
 	for key, value := range lc.Headers {
 		req.Header.Set(key, value)
 	}
 	resp, err := lc.Client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
+		return SubmissionDetailResponse{}, fmt.Errorf("failed to execute request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return SubmissionDetailResponse{}, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	var response map[string]interface{}
+	var response SubmissionDetailResponse
 	if err := json.Unmarshal(body, &response); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+		return SubmissionDetailResponse{}, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	submissionDetails, ok := response["data"].(map[string]interface{})["submissionDetail"]
-	if !ok {
-		return nil, errors.New("failed to retrieve submission details")
-	}
+	// submissionDetails, ok := response["data"].(map[string]interface{})["submissionDetail"]
+	// submissionDetails, ok := response.Co
+	// if !ok {
+	// 	return nil, errors.New("failed to retrieve submission details")
+	// }
 
-	return submissionDetails.(map[string]interface{}), nil
+	return response, nil
 }
 
-func (lc *LeetcodeClient) GetSubmissionList(pageNum int) (map[string]interface{}, error) {
+func (lc *LeetcodeClient) GetSubmissionList(pageNum int) (SubmissionsDump, error) {
 	log.Printf("Now scraping submissions list for page: %d\n", pageNum)
 	submissionsURL := fmt.Sprintf("https://leetcode.cn/api/submissions/?offset=%d&limit=40", pageNum)
 	req, err := http.NewRequest("GET", submissionsURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return SubmissionsDump{}, fmt.Errorf("failed to create request: %w", err)
 	}
 	for key, value := range lc.Headers {
 		req.Header.Set(key, value)
 	}
 	resp, err := lc.Client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
+		return SubmissionsDump{}, fmt.Errorf("failed to execute request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return SubmissionsDump{}, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	var submissionsList map[string]interface{}
+	var submissionsList SubmissionsDump
 	if err := json.Unmarshal(body, &submissionsList); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+		return SubmissionsDump{}, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
 	return submissionsList, nil
