@@ -113,7 +113,6 @@ func (lc *LeetcodeClient) Login() error {
 }
 
 func (lc *LeetcodeClient) DownloadCode(submission Submission) (SubmissionDetailResponse, error) {
-	log.Println("Downloading code", submission)
 	queryFile, err := os.ReadFile("query/query_download_submission")
 	if err != nil {
 		return SubmissionDetailResponse{}, fmt.Errorf("failed to read query file: %w", err)
@@ -125,7 +124,6 @@ func (lc *LeetcodeClient) DownloadCode(submission Submission) (SubmissionDetailR
 		"operationName": "mySubmissionDetail",
 		"variables":     map[string]interface{}{"id": submission.ID},
 	}
-	log.Println("download code data", data)
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return SubmissionDetailResponse{}, fmt.Errorf("failed to marshal JSON: %w", err)
@@ -185,6 +183,5 @@ func (lc *LeetcodeClient) GetSubmissionList(pageNum int) (SubmissionsDump, error
 	if err := json.Unmarshal(body, &submissionsList); err != nil {
 		return SubmissionsDump{}, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
-	log.Println(submissionsList)
 	return submissionsList, nil
 }
