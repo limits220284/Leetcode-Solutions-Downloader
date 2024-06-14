@@ -1,21 +1,22 @@
-[Engish Document](README-EN.md)
-# leetocde题解下载器
-一个leetcode题解下载器，欢迎提issue和pr
-# 使用
-1. 配置config.json
+[中文文档](README-CN.md)
+# LeetCode Solution Downloader
+A LeetCode solution downloader. Welcome to raise issues and submit pull requests.
+
+# Usage
+1. Configure config.json
 ```json
 {
-    "output_dir": "./output", // 下载文件的输出目录
-    "cookie": "***", // 登录leetcode的cookie
-    "day": 100 // 下载最近100天的题解，可以自己设定
+    "output_dir": "./output", // Output directory for downloaded files
+    "cookie": "***", // Your LeetCode login cookie
+    "day": 100 // Download solutions for the last 100 days, you can customize this
 }
 ```
-2. 执行
+2. Run
 ```shell
 go run main.go
 ```
 
 # TODO
-- [ ] 利用Golang的并发能力提高下载速度
-- [ ] 容器化操作，定时爬去题解，并推送到仓库中
-- [ ] 增加超时重试机制，如果爬取失败，则重试
+- [ ] Utilize Golang's concurrency to improve download speed
+- [ ] Containerize operations, periodically crawl solutions, and push them to the repository
+- [ ] Add timeout retry mechanism. Retry if crawling fails.
